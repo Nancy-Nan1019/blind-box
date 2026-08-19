@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hong Kong Gift Booth</title>
+  <meta
+    name="description"
+    content="一个适合朋友分享的轻量级盲盒抽礼物页面，支持 6 个展位与本地状态保存。"
+  >
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;700&display=swap"
+    rel="stylesheet"
+  >
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="hero">
+      <p class="eyebrow">Lucky Draw Booth</p>
+      <h1>香港礼物盲盒展位</h1>
+      <p class="hero-copy">
+        先把 6 个位置摆好，礼物内容暂时用占位描述。等你买完礼物后，直接改配置就能上线给朋友玩。
+      </p>
+
+      <div class="hero-actions">
+        <button class="primary-button" id="resetButton" type="button">
+          重置本机抽取记录
+        </button>
+        <span class="sync-note">当前版本：纯前端，本机保存状态</span>
+      </div>
+    </header>
+
+    <main>
+      <section class="board-panel" aria-labelledby="boardTitle">
+        <div class="board-heading">
+          <div>
+            <p class="board-kicker">6 Booths</p>
+            <h2 id="boardTitle">选择一个展位开盒</h2>
+          </div>
+          <p class="board-status" id="boardStatus">已开启 0 / 6</p>
+        </div>
+
+        <div class="booth-grid" id="boothGrid" aria-live="polite"></div>
+      </section>
+    </main>
+  </div>
+
+  <dialog class="result-modal" id="resultModal">
+    <form method="dialog" class="modal-card">
+      <button class="close-button" type="submit" aria-label="关闭弹窗">×</button>
+      <p class="modal-label" id="modalLabel"></p>
+      <h3 class="modal-title" id="modalTitle"></h3>
+      <p class="modal-copy" id="modalCopy"></p>
+      <button class="primary-button modal-button" type="submit">收下好运</button>
+    </form>
+  </dialog>
+
+  <template id="boothTemplate">
+    <article class="booth-card">
+      <button class="booth-button" type="button">
+        <span class="booth-glow"></span>
+        <span class="booth-topline"></span>
+        <span class="booth-meta"></span>
+        <strong class="booth-name"></strong>
+        <span class="booth-icon" aria-hidden="true">🎁</span>
+        <span class="booth-hint"></span>
+      </button>
+    </article>
+  </template>
+
+  <script src="./script.js"></script>
+</body>
+</html>
