@@ -1,55 +1,12 @@
-const STORAGE_KEY = "playful-blind-box-state-v1";
+const SUPABASE_URL = "https://vdlqidhoprpuxznmapks.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY =
+  "sb_publishable_1RHGj6VZ3QTDyL0gQ4FtXQ_PsTDh5Xa";
+const supabaseClient = supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY
+);
 
-const gifts = [
-  {
-    id: 1,
-    boothLabel: "Booth 01",
-    title: "维港夜色小惊喜",
-    teaser: "占位礼物，等香港采购后替换",
-    reveal: "这里会放你在香港买回来的第一份礼物描述。",
-    icon: "🎐",
-  },
-  {
-    id: 2,
-    boothLabel: "Booth 02",
-    title: "港风限定小物",
-    teaser: "先保留神秘感",
-    reveal: "这一格先留给第二份礼物，可以写品牌、颜色或一句有趣备注。",
-    icon: "🛍️",
-  },
-  {
-    id: 3,
-    boothLabel: "Booth 03",
-    title: "甜品系隐藏款",
-    teaser: "之后再决定具体内容",
-    reveal: "未来你可以把这里改成甜品券、零食、钥匙扣之类的内容。",
-    icon: "🍮",
-  },
-  {
-    id: 4,
-    boothLabel: "Booth 04",
-    title: "街头散步纪念",
-    teaser: "占位中，待采购",
-    reveal: "这份礼物目前还是占位，后续直接改文字就能上线给朋友抽。",
-    icon: "🚋",
-  },
-  {
-    id: 5,
-    boothLabel: "Booth 05",
-    title: "低调但很会选",
-    teaser: "先留给未来的灵感",
-    reveal: "如果你买到特别适合某个朋友的小东西，就可以替换这一格。",
-    icon: "🌆",
-  },
-  {
-    id: 6,
-    boothLabel: "Booth 06",
-    title: "压轴神秘彩蛋",
-    teaser: "最后一份礼物预留位",
-    reveal: "这一格适合放压轴款，也可以写成隐藏大奖或特别备注。",
-    icon: "🎇",
-  },
-];
+let gifts = [];
 
 const boothGrid = document.getElementById("boothGrid");
 const boothTemplate = document.getElementById("boothTemplate");
@@ -60,39 +17,16 @@ const modalLabel = document.getElementById("modalLabel");
 const modalTitle = document.getElementById("modalTitle");
 const modalCopy = document.getElementById("modalCopy");
 
-const state = loadState();
+const state = {
+  openedIds: [],
+  isLoading: false,
+};
 
-renderBooths();
 bindEvents();
-updateBoardStatus();
-
-function loadState() {
-  try {
-    const saved = window.localStorage.getItem(STORAGE_KEY);
-    if (!saved) {
-      return {
-        openedIds: [],
-      };
-    }
-
-    const parsed = JSON.parse(saved);
-    if (!Array.isArray(parsed.openedIds)) {
-      throw new Error("Invalid saved state");
-    }
-
-    return {
-      openedIds: parsed.openedIds,
-    };
-  } catch (error) {
-    return {
-      openedIds: [],
-    };
-  }
-}
-
-function saveState() {
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-}
+renderBooths();
+updateBoardStatus("正在连接展位状态...");
+loadBoxes();
+subscribeToBoxes();
 
 function renderBooths() {
   boothGrid.innerHTML = "";
@@ -142,27 +76,66 @@ function bindEvents() {
   });
 
   resetButton.addEventListener("click", () => {
-    state.openedIds = [];
-    saveState();
-    renderBooths();
-    updateBoardStatus();
+    loadBoxes();
   });
 }
 
-function openGift(button, gift) {
+async function loadBoxes() {
+  setLoading(true);
+
+  const { data, error } = await supabaseClient
+    .from("blind_boxes")
+    .select("*")
+    .order("id", { ascending: true });
+
+  setLoading(false);
+
+  if (error) {
+    console.error(error);
+    updateBoardStatus("展位状态加载失败");
+    return;
+  }
+
+  gifts = data ?? [];
+  state.openedIds = gifts.filter((item) => item.opened).map((item) => item.id);
+  renderBooths();
+  updateBoardStatus();
+}
+
+async function openGift(button, gift) {
+  if (state.isLoading) {
+    return;
+  }
+
   button.classList.add("is-opening");
 
-  window.setTimeout(() => {
-    button.classList.remove("is-opening");
-    button.classList.add("is-opened");
-    button.disabled = true;
+  const { data, error } = await supabaseClient
+    .from("blind_boxes")
+    .update({
+      opened: true,
+      opened_at: new Date().toISOString(),
+    })
+    .eq("id", gift.id)
+    .eq("opened", false)
+    .select()
+    .maybeSingle();
 
-    state.openedIds.push(gift.id);
-    saveState();
-    renderBooths();
-    updateBoardStatus();
-    showResult(gift);
-  }, 420);
+  button.classList.remove("is-opening");
+
+  if (error) {
+    console.error(error);
+    window.alert("开盒失败，请稍后再试。");
+    return;
+  }
+
+  if (!data) {
+    await loadBoxes();
+    window.alert("这个盲盒刚刚已经被别人抽走了。");
+    return;
+  }
+
+  await loadBoxes();
+  showResult(data);
 }
 
 function showResult(gift) {
@@ -178,9 +151,29 @@ function showResult(gift) {
   window.alert(`${gift.boothLabel}\n${gift.title}\n\n${gift.reveal}`);
 }
 
-function updateBoardStatus() {
+function updateBoardStatus(message) {
+  if (message) {
+    boardStatus.textContent = message;
+    return;
+  }
+
   boardStatus.textContent = `已开启 ${state.openedIds.length} / ${gifts.length}`;
 }
 
-// 未来如果你需要所有朋友看到同一状态，可以在这里接 Supabase 或 Firebase。
-// 保留 gifts 数据结构不变，只需要把 loadState/saveState 改成远程读写即可。
+function setLoading(isLoading) {
+  state.isLoading = isLoading;
+  resetButton.disabled = isLoading;
+}
+
+function subscribeToBoxes() {
+  supabaseClient
+    .channel("blind-box-changes")
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "blind_boxes" },
+      () => {
+        loadBoxes();
+      }
+    )
+    .subscribe();
+}
