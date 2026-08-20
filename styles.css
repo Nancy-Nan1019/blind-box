@@ -121,9 +121,28 @@ body::after {
   transition: transform 180ms ease, box-shadow 180ms ease;
 }
 
+.ghost-button {
+  border: 1px solid rgba(156, 66, 24, 0.18);
+  border-radius: 999px;
+  background: rgba(255, 249, 239, 0.65);
+  color: var(--accent-deep);
+  padding: 14px 22px;
+  font: inherit;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+}
+
 .primary-button:hover {
   transform: translateY(-2px);
   box-shadow: 0 20px 36px rgba(156, 66, 24, 0.3);
+}
+
+.ghost-button:hover {
+  transform: translateY(-2px);
+  border-color: rgba(156, 66, 24, 0.32);
+  background: rgba(255, 245, 229, 0.88);
 }
 
 .sync-note,
@@ -337,6 +356,39 @@ body::after {
 
 .modal-button {
   margin-top: 24px;
+}
+
+.admin-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.field-label {
+  margin-top: 20px;
+  font-size: 0.96rem;
+  font-weight: 700;
+}
+
+.password-input {
+  width: 100%;
+  margin-top: 10px;
+  border: 1px solid rgba(122, 65, 18, 0.16);
+  border-radius: 16px;
+  padding: 14px 16px;
+  font: inherit;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.password-input:focus-visible {
+  outline: 3px solid rgba(217, 111, 50, 0.22);
+  outline-offset: 2px;
+}
+
+.form-status {
+  min-height: 1.5em;
+  margin: 12px 0 0;
+  color: var(--muted);
 }
 
 @keyframes float {

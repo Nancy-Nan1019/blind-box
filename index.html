@@ -26,6 +26,9 @@
         <button class="primary-button" id="resetButton" type="button">
           刷新展位状态
         </button>
+        <button class="ghost-button" id="adminResetButton" type="button">
+          管理员重置
+        </button>
       </div>
     </header>
 
@@ -51,6 +54,31 @@
       <h3 class="modal-title" id="modalTitle"></h3>
       <p class="modal-copy" id="modalCopy"></p>
       <button class="primary-button modal-button" type="submit">收下好运</button>
+    </form>
+  </dialog>
+
+  <dialog class="result-modal" id="adminModal">
+    <form class="modal-card admin-form" id="adminForm">
+      <button class="close-button" id="adminModalClose" type="button" aria-label="关闭弹窗">×</button>
+      <p class="modal-label">Admin Access</p>
+      <h3 class="modal-title">重置全部盲盒状态</h3>
+      <p class="modal-copy">
+        输入管理员密码后，所有展位会恢复为未开启状态。
+      </p>
+      <label class="field-label" for="adminPassword">管理员密码</label>
+      <input
+        class="password-input"
+        id="adminPassword"
+        name="password"
+        type="password"
+        autocomplete="current-password"
+        placeholder="请输入密码"
+        required
+      >
+      <p class="form-status" id="adminStatus" aria-live="polite"></p>
+      <button class="primary-button modal-button" id="confirmAdminReset" type="submit">
+        确认重置
+      </button>
     </form>
   </dialog>
 

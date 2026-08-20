@@ -12,14 +12,22 @@ const boothGrid = document.getElementById("boothGrid");
 const boothTemplate = document.getElementById("boothTemplate");
 const boardStatus = document.getElementById("boardStatus");
 const resetButton = document.getElementById("resetButton");
+const adminResetButton = document.getElementById("adminResetButton");
 const resultModal = document.getElementById("resultModal");
 const modalLabel = document.getElementById("modalLabel");
 const modalTitle = document.getElementById("modalTitle");
 const modalCopy = document.getElementById("modalCopy");
+const adminModal = document.getElementById("adminModal");
+const adminForm = document.getElementById("adminForm");
+const adminPassword = document.getElementById("adminPassword");
+const adminStatus = document.getElementById("adminStatus");
+const adminModalClose = document.getElementById("adminModalClose");
+const confirmAdminReset = document.getElementById("confirmAdminReset");
 
 const state = {
   openedIds: [],
   isLoading: false,
+  isResetting: false,
 };
 
 bindEvents();
@@ -77,6 +85,28 @@ function bindEvents() {
 
   resetButton.addEventListener("click", () => {
     loadBoxes();
+  });
+
+  adminResetButton.addEventListener("click", () => {
+    adminStatus.textContent = "";
+    adminForm.reset();
+
+    if (typeof adminModal.showModal === "function") {
+      adminModal.showModal();
+      window.setTimeout(() => adminPassword.focus(), 50);
+      return;
+    }
+
+    window.alert("当前浏览器不支持管理员弹窗。");
+  });
+
+  adminModalClose.addEventListener("click", () => {
+    adminModal.close();
+  });
+
+  adminForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    await resetAllBoxes();
   });
 }
 
@@ -165,6 +195,13 @@ function setLoading(isLoading) {
   resetButton.disabled = isLoading;
 }
 
+function setResetting(isResetting) {
+  state.isResetting = isResetting;
+  confirmAdminReset.disabled = isResetting;
+  adminPassword.disabled = isResetting;
+  adminResetButton.disabled = isResetting;
+}
+
 function subscribeToBoxes() {
   supabaseClient
     .channel("blind-box-changes")
@@ -176,4 +213,52 @@ function subscribeToBoxes() {
       }
     )
     .subscribe();
+}
+
+async function resetAllBoxes() {
+  const password = adminPassword.value.trim();
+
+  if (!password) {
+    adminStatus.textContent = "请输入管理员密码。";
+    return;
+  }
+
+  setResetting(true);
+  adminStatus.textContent = "正在重置展位状态...";
+
+  try {
+    const response = await fetch(
+      `${SUPABASE_URL}/functions/v1/reset-boxes`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: SUPABASE_PUBLISHABLE_KEY,
+          Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({ password }),
+      }
+    );
+
+    const payload = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      adminStatus.textContent = payload.error || "重置失败，请检查密码。";
+      return;
+    }
+
+    adminStatus.textContent = "已重置完成。";
+    adminForm.reset();
+    await loadBoxes();
+    window.setTimeout(() => {
+      if (adminModal.open) {
+        adminModal.close();
+      }
+    }, 450);
+  } catch (error) {
+    console.error(error);
+    adminStatus.textContent = "连接重置服务失败，请稍后再试。";
+  } finally {
+    setResetting(false);
+  }
 }
