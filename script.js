@@ -50,16 +50,12 @@ function renderBooths() {
     const isOpened = state.openedIds.includes(gift.id);
 
     meta.textContent = gift.boothLabel;
-    // Keep the gift name hidden on the board until its box has been opened.
-    name.textContent = isOpened ? gift.title : "神秘盲盒";
-    icon.textContent = isOpened ? gift.icon : "🎁";
+    name.textContent = gift.title;
+    icon.textContent = gift.icon;
     hint.textContent = isOpened ? "已被抽取，结果已经锁定" : gift.teaser;
 
     button.dataset.giftId = String(gift.id);
-    button.setAttribute(
-      "aria-label",
-      isOpened ? `${gift.boothLabel}：${gift.title}` : `${gift.boothLabel}：神秘盲盒`
-    );
+    button.setAttribute("aria-label", `${gift.boothLabel}：${gift.title}`);
 
     if (isOpened) {
       button.classList.add("is-opened");
